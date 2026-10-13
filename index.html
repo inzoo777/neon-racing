@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Neon Racing</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#08051b;color:#00ffff;font-family:Arial,sans-serif;text-align:center;min-height:100dvh;display:flex;flex-direction:column;align-items:center;padding:10px;touch-action:manipulation}
+h1{font-size:clamp(22px,6vw,32px);margin:8px 0}#hud{display:flex;gap:18px;justify-content:center;font-weight:bold;margin:5px 0 10px}
+canvas{display:block;width:min(94vw,360px,52dvh);height:auto;max-height:62dvh;border:2px solid #00ffff;border-radius:10px;background:#222;touch-action:none}
+.controls{display:flex;gap:12px;width:min(94vw,360px);margin:12px auto 0}
+button{flex:1;min-height:56px;border:2px solid #00ffff;border-radius:14px;background:#10102a;color:#00ffff;font-size:18px;font-weight:bold;touch-action:manipulation;user-select:none;-webkit-user-select:none}
+button:active{background:#123b4b;transform:scale(.98)}#restart{width:min(94vw,360px);margin-top:8px;min-height:44px}
+.note{font-size:12px;color:#a6eafa;margin:8px}
+</style></head><body>
+<h1>🏎️ NEON RACING</h1><div id="hud"><span id="score">Score: 0</span><span id="state">Ready!</span></div>
+<canvas id="game" width="360" height="600" aria-label="Neon racing game"></canvas>
+<div class="controls"><button id="left" aria-label="Steer left">⬅ LEFT</button><button id="right" aria-label="Steer right">RIGHT ➡</button></div>
+<button id="restart">↻ RESTART</button><div class="note">Use the touch buttons or keyboard arrows. Avoid traffic!</div>
+<script>
+const canvas=document.getElementById('game'),ctx=canvas.getContext('2d');
+const scoreEl=document.getElementById('score'),stateEl=document.getElementById('state');
+let carX=162,enemies=[],score=0,over=false,frame=0,last=0,raf;
+const lanes=[62,162,262];
+function reset(){carX=162;enemies=[];score=0;over=false;frame=0;last=0;stateEl.textContent='Racing';scoreEl.textContent='Score: 0';}
+function steer(d){if(over)return;const i=lanes.reduce((best,x,j)=>Math.abs(x-carX)<Math.abs(lanes[best]-carX)?j:best,0);carX=lanes[Math.max(0,Math.min(2,i+d))];}
+function bindHold(id,d){const el=document.getElementById(id);el.addEventListener('pointerdown',e=>{e.preventDefault();steer(d)});}
+bindHold('left',-1);bindHold('right',1);document.getElementById('restart').addEventListener('click',reset);
+addEventListener('keydown',e=>{if(['ArrowLeft','ArrowRight',' '].includes(e.key))e.preventDefault();if(e.key==='ArrowLeft')steer(-1);if(e.key==='ArrowRight')steer(1);if(e.key===' '&&over)reset()});
+function car(x,y,color){ctx.fillStyle=color;ctx.fillRect(x,y,36,58);ctx.fillStyle='#d9faff';ctx.fillRect(x+6,y+8,24,14);ctx.fillStyle='#111';ctx.fillRect(x+3,y+43,7,10);ctx.fillRect(x+26,y+43,7,10);ctx.fillStyle='#fff8a0';ctx.fillRect(x+4,y+2,7,4);ctx.fillRect(x+25,y+2,7,4)}
+function loop(t){raf=requestAnimationFrame(loop);if(t-last<16)return;last=t;ctx.clearRect(0,0,360,600);ctx.fillStyle='#17172a';ctx.fillRect(0,0,360,600);ctx.fillStyle='#333344';ctx.fillRect(35,0,290,600);
+ctx.strokeStyle='#00ffff';ctx.lineWidth=3;ctx.setLineDash([24,22]);ctx.lineDashOffset=-(frame%46);ctx.beginPath();ctx.moveTo(132,0);ctx.lineTo(132,600);ctx.moveTo(228,0);ctx.lineTo(228,600);ctx.stroke();ctx.setLineDash([]);
+if(!over){frame++;if(frame%48===0)enemies.push({x:lanes[Math.floor(Math.random()*3)],y:-65,s:3+Math.min(4,score/500)});
+for(const e of enemies)e.y+=e.s;enemies=enemies.filter(e=>e.y<620);score++;for(const e of enemies)if(e.x<carX+32&&e.x+36>carX+4&&e.y<518&&e.y+58>480){over=true;stateEl.textContent='Game Over'}scoreEl.textContent='Score: '+Math.floor(score/5)}
+enemies.forEach(e=>car(e.x,e.y,'#ff335e'));car(carX,480,'#00eaff');
+if(over){ctx.fillStyle='rgba(0,0,0,.72)';ctx.fillRect(35,235,290,115);ctx.fillStyle='#fff';ctx.textAlign='center';ctx.font='bold 28px Arial';ctx.fillText('GAME OVER',180,280);ctx.font='17px Arial';ctx.fillText('Tap RESTART to race again',180,315);ctx.textAlign='start'}
+}
+reset();loop(0);
+</script></body></html>
